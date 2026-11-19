@@ -61,6 +61,7 @@ if MAPS:
     parts.append(f'<section class="maps" id="maps"><header><p class="chn">부록</p><h2>지도</h2></header>{figs}</section>')
 chapter_html = '\n'.join(parts)
 EMBLEM = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'emblem_inner.svg'), encoding='utf-8').read().replace('#221d18', 'currentColor')
+BOOK_RATIO = f"{COVER['w'] / COVER['h']:.4f}" if COVER else '0.66'
 OG = 'og.jpg' if os.path.exists(os.path.join(out, 'og.jpg')) else 'og.png'
 if COVER:
     COVER_HTML = (f'<img class="book" src="{COVER["src"]}" width="{COVER["w"]}" height="{COVER["h"]}" alt="{TITLE} {SUB} 표지">'
@@ -167,16 +168,17 @@ a {{ color:inherit; }}
 .prog {{ position:absolute; left:0; bottom:-1px; height:2px; background:var(--accent); width:0; }}
 
 /* cover */
-.cover {{ min-height:100svh; display:flex; flex-direction:column; justify-content:center; padding:90px 0 40px; }}
-.cover .mark {{ width:120px; height:120px; margin:0 0 28px -6px; }}
+.cover {{ min-height:100vh; min-height:100svh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:72px 0 40px; }}
+.cover .mark {{ width:120px; height:120px; margin:0 auto 28px; }}
 .cover h1 {{ font-family:var(--display); font-weight:800; font-size:clamp(44px, 14vw, 72px); line-height:1.05; margin:0; letter-spacing:-.01em; }}
 .cover .sub {{ font-family:var(--ui); font-size:15px; color:var(--soft); margin:14px 0 0; letter-spacing:.04em; }}
-.cover .line {{ font-size:calc(var(--fs) * 1.05); margin:28px 0 0; max-width:22em; }}
-.cover .go {{ display:flex; flex-wrap:wrap; gap:10px; margin-top:34px; }}
+.cover .line {{ font-size:calc(var(--fs) * 1.05); margin:28px auto 0; max-width:22em; }}
+.cover .go {{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:34px; }}
 .pill {{ display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:0 22px; border-radius:999px;
   font:700 16px var(--ui); text-decoration:none; border:1.5px solid var(--ink); background:transparent; color:var(--ink); cursor:pointer; }}
 .pill.solid {{ background:var(--ink); color:var(--paper); }}
-.cover .book {{ display:block; width:min(100%, 380px); height:auto; border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,.25); margin:0 0 6px; }}
+.cover .book {{ display:block; height:auto; border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,.25); margin:0 auto 6px;
+  width:min(100%, calc((100vh - 170px) * {BOOK_RATIO})); width:min(100%, calc((100svh - 170px) * {BOOK_RATIO})); }}
 .sr {{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }}
 .maps {{ padding:88px 0 6em; border-top:1px solid var(--rule); }}
 .maps header {{ margin-bottom:1.6em; }}
@@ -247,7 +249,7 @@ a {{ color:inherit; }}
 <main class="wrap">
   <section class="cover" id="top">
     {COVER_HTML}
-    <p class="line">{esc(LINE)}</p>
+    <p class="line">{esc(LINE).replace('화살로, ', '화살로,<br>')}</p>
     <div class="go">
       <a class="pill solid" id="resumeBtn" href="#ch1">처음부터 읽기</a>
       <button class="pill" id="tocBtn2" type="button">목차</button>

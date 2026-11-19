@@ -95,16 +95,17 @@ a { color:inherit; }
 .prog { position:absolute; left:0; bottom:-1px; height:2px; background:var(--accent); width:0; }
 
 /* cover */
-.cover { min-height:100svh; display:flex; flex-direction:column; justify-content:center; padding:90px 0 40px; }
-.cover .mark { width:120px; height:120px; margin:0 0 28px -6px; }
+.cover { min-height:100vh; min-height:100svh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:72px 0 40px; }
+.cover .mark { width:120px; height:120px; margin:0 auto 28px; }
 .cover h1 { font-family:var(--display); font-weight:800; font-size:clamp(44px, 14vw, 72px); line-height:1.05; margin:0; letter-spacing:-.01em; }
 .cover .sub { font-family:var(--ui); font-size:15px; color:var(--soft); margin:14px 0 0; letter-spacing:.04em; }
-.cover .line { font-size:calc(var(--fs) * 1.05); margin:28px 0 0; max-width:22em; }
-.cover .go { display:flex; flex-wrap:wrap; gap:10px; margin-top:34px; }
+.cover .line { font-size:calc(var(--fs) * 1.05); margin:28px auto 0; max-width:22em; }
+.cover .go { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:34px; }
 .pill { display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:0 22px; border-radius:999px;
   font:700 16px var(--ui); text-decoration:none; border:1.5px solid var(--ink); background:transparent; color:var(--ink); cursor:pointer; }
 .pill.solid { background:var(--ink); color:var(--paper); }
-.cover .book { display:block; width:min(100%, 380px); height:auto; border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,.25); margin:0 0 6px; }
+.cover .book { display:block; height:auto; border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,.25); margin:0 auto 6px;
+  width:min(100%, calc((100vh - 170px) * 0.6642)); width:min(100%, calc((100svh - 170px) * 0.6642)); }
 .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 .maps { padding:88px 0 6em; border-top:1px solid var(--rule); }
 .maps header { margin-bottom:1.6em; }
@@ -175,7 +176,7 @@ a { color:inherit; }
 <main class="wrap">
   <section class="cover" id="top">
     <img class="book" src="img/cover.jpg" width="900" height="1355" alt="화랑화살 1부 · 과녁 뒤의 아이 표지"><h1 class="sr">화랑화살</h1><p class="sr">1부 · 과녁 뒤의 아이</p>
-    <p class="line">못 쏘는 아이가, 남이 버린 화살로, 아무도 못 끊는 것을 끊는다.</p>
+    <p class="line">못 쏘는 아이가, 남이 버린 화살로,<br>아무도 못 끊는 것을 끊는다.</p>
     <div class="go">
       <a class="pill solid" id="resumeBtn" href="#ch1">처음부터 읽기</a>
       <button class="pill" id="tocBtn2" type="button">목차</button>
