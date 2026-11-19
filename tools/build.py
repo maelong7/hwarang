@@ -61,6 +61,7 @@ if MAPS:
     parts.append(f'<section class="maps" id="maps"><header><p class="chn">부록</p><h2>지도</h2></header>{figs}</section>')
 chapter_html = '\n'.join(parts)
 EMBLEM = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'emblem_inner.svg'), encoding='utf-8').read().replace('#221d18', 'currentColor')
+OG = 'og.jpg' if os.path.exists(os.path.join(out, 'og.jpg')) else 'og.png'
 if COVER:
     COVER_HTML = (f'<img class="book" src="{COVER["src"]}" width="{COVER["w"]}" height="{COVER["h"]}" alt="{TITLE} {SUB} 표지">'
                   f'<h1 class="sr">{TITLE}</h1><p class="sr">{SUB}</p>')
@@ -82,7 +83,7 @@ page = f'''<!doctype html>
 <meta property="og:type" content="book">
 <meta property="og:title" content="{TITLE} {SUB}">
 <meta property="og:description" content="{esc(LINE)}">
-<meta property="og:image" content="{site_url}og.png">
+<meta property="og:image" content="{site_url}{OG}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:url" content="{site_url}">
@@ -378,10 +379,12 @@ a {{ color:inherit; }}
         var el = els[i];
         if (el.tagName==='P' && el.id && /^c\\d+-/.test(el.id)) return el.id;
         if (el.classList && el.classList.contains('cover')) return null;
+        if (el.classList && el.classList.contains('maps')) return 'maps';
       }}
     }}
     return lastSaved || null;
   }}
+  /* setFs keeps the reader on the same paragraph; the maps section is a fine anchor too */
   function chOf(id){{ var m=/^c(\\d+)-/.exec(id||''); return m ? +m[1] : 0; }}
   function jumpTo(id, smooth){{ var el=document.getElementById(id); if (!el) return false;
     var top = el.getBoundingClientRect().top + window.scrollY - barH() - 16; window.scrollTo({{top: top, behavior: smooth ? 'smooth':'auto'}}); lastY = window.scrollY; return true; }}
@@ -398,8 +401,8 @@ a {{ color:inherit; }}
     lastY = y;
     var h = document.documentElement.scrollHeight - window.innerHeight; prog.style.width = (h>0 ? (y/h*100) : 0) + '%';
     var id = currentPara(), ch = chOf(id);
-    where.textContent = ch ? (ch + '장 · ' + TITLES[ch]) : '{TITLE}';
-    if (!restoring && id && id !== lastSaved) {{ lastSaved = id; LS.set('hrhs-pos', id); if (ch > maxRead) {{ maxRead = ch; LS.set('hrhs-max', ch); }} paintToc(ch); }}
+    where.textContent = id === 'maps' ? '부록 · 지도' : ch ? (ch + '장 · ' + TITLES[ch]) : '{TITLE}';
+    if (!restoring && ch && id !== lastSaved) {{ lastSaved = id; LS.set('hrhs-pos', id); if (ch > maxRead) {{ maxRead = ch; LS.set('hrhs-max', ch); }} paintToc(ch); }}
     ticking=false;
   }}
   window.addEventListener('scroll', function(){{ if (!ticking) {{ ticking=true; requestAnimationFrame(onScroll); }} }}, {{passive:true}});
@@ -461,7 +464,7 @@ manifest = {
 json.dump(manifest, open(os.path.join(out, 'manifest.webmanifest'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 
 sw = f'''const CACHE = 'hrhs-{version}';
-const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
+const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'{", 'img/cover.jpg'" if COVER else ''}];
 self.addEventListener('install', e => {{ e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); }});
 self.addEventListener('activate', e => {{ e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); }});
 self.addEventListener('fetch', e => {{
