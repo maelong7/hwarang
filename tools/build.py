@@ -25,12 +25,19 @@ def pic(name):
     return {'src': 'img/' + name, 'w': w, 'h': h}
 COVER = pic('cover.jpg')
 MAPS = [m for m in [(pic('map-route.jpg'), '1부에서 걸은 길'), (pic('map-city.jpg'), '서라벌')] if m[0]]
+# appendix after the last chapter: character notes and the five crests (tools/cast.json, pictures in <out>/img/cast/)
+_cast_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cast.json')
+CAST = json.load(open(_cast_path, encoding='utf-8')) if os.path.exists(_cast_path) else None
+if CAST and not pic('cast/sol.jpg'): CAST = None
 
 total = sum(len(i[1]) for c in chapters for i in c['items'] if i[0] != 'brk')
 
 toc_items = ''.join(
     f'<li><a href="#ch{c["n"]}" data-ch="{c["n"]}"><span class="tn">{c["n"]}</span>'
     f'<span class="tt">{esc(c["title"])}</span></a></li>' for c in chapters)
+if CAST:
+    toc_items += '<li><a href="#cast" data-go="cast"><span class="tn">부록</span><span class="tt">인물 소개</span></a></li>'
+    toc_items += '<li><a href="#crests" data-go="crests"><span class="tn">부록</span><span class="tt">오계 문장</span></a></li>'
 if MAPS:
     toc_items += '<li><a href="#maps" data-go="maps"><span class="tn">부록</span><span class="tt">지도</span></a></li>'
 
@@ -54,11 +61,36 @@ for idx, c in enumerate(chapters):
         f'<header><p class="chn">{n}장</p><h2>{esc(c["title"])}</h2></header>'
         + ''.join(body) + f'<footer class="chend">{end}</footer></section>')
 
+def img_tag(name, alt):
+    m = pic('cast/' + name)
+    return (f'<a href="{m["src"]}" target="_blank" rel="noopener"><img src="{m["src"]}" width="{m["w"]}" height="{m["h"]}" '
+            f'loading="lazy" alt="{esc(alt)}"></a>')
+if CAST:
+    idx = ''.join(f'<a href="#p-{p["id"]}">{esc(p["name"])}</a>' for p in CAST['people'])
+    cards = []
+    for p in CAST['people']:
+        figs = ''.join(f'<figure>{img_tag(f, p["name"] + " 인물 시트")}' + (f'<figcaption>{esc(cap)}</figcaption>' if cap else '') + '</figure>'
+                       for f, cap in p['sheets'])
+        facts = ''.join(f'<div><dt>{esc(dt)}</dt><dd>{dd}</dd></div>' for dt, dd in p['facts'])   # dd keeps its <q> quotes
+        cards.append(f'<article class="pc" id="p-{p["id"]}"><header><h3>{esc(p["name"])}</h3><p class="rank">{esc(p["rank"])}</p>'
+                     f'<p class="who">{esc(p["who"])}</p></header><p class="pline">{p["line"]}</p>{figs}<dl>{facts}</dl></article>')
+    parts.append(f'<section class="appx cast" id="cast"><header><p class="chn">부록</p><h2>인물 소개</h2></header>'
+                 f'<p class="lead">{esc(CAST["intro"])}</p><nav class="pidx" aria-label="인물 바로 가기">{idx}</nav>' + ''.join(cards) + '</section>')
+    C = CAST['crests']
+    items = ''.join(f'<figure class="crest">{img_tag(c["img"], c["name"] + " 문장")}<figcaption><b>{esc(c["name"])}</b>'
+                    f'<span class="crank">{esc(c["rank"])}</span><span class="cline">{esc(c["line"])}</span><span class="cwho">{esc(c["who"])}</span></figcaption></figure>'
+                    for c in C['items'])
+    # all five side by side first, so they can be compared at a glance; the notes follow below
+    strip = ''.join(f'<figure><img src="{pic("cast/" + c["img"])["src"]}" width="600" height="600" loading="lazy" alt="">'
+                    f'<figcaption><b>{esc(c["name"].split(" · ")[0])}</b>{esc(c["rank"].split(" · ")[0])}</figcaption></figure>' for c in C['items'])
+    parts.append(f'<section class="appx crests" id="crests"><header><p class="chn">부록</p><h2>오계 문장</h2></header>'
+                 f'<p class="lead">{esc(C["lead"])}</p><div class="creststrip" aria-hidden="true">{strip}</div>'
+                 f'<p class="sublead">{esc(C["sub"])}</p><div class="crestgrid">{items}</div><p class="cnote">{esc(C["note"])}</p></section>')
 if MAPS:
     figs = ''.join(
         f'<figure><a href="{m["src"]}" target="_blank" rel="noopener"><img src="{m["src"]}" width="{m["w"]}" height="{m["h"]}" loading="lazy" alt="{esc(cap)} 지도"></a>'
         f'<figcaption>{esc(cap)} · 누르면 크게 볼 수 있어요</figcaption></figure>' for m, cap in MAPS)
-    parts.append(f'<section class="maps" id="maps"><header><p class="chn">부록</p><h2>지도</h2></header>{figs}</section>')
+    parts.append(f'<section class="appx maps" id="maps"><header><p class="chn">부록</p><h2>지도</h2></header>{figs}</section>')
 chapter_html = '\n'.join(parts)
 EMBLEM = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'emblem_inner.svg'), encoding='utf-8').read().replace('#221d18', 'currentColor')
 BOOK_RATIO = f"{COVER['w'] / COVER['h']:.4f}" if COVER else '0.66'
@@ -180,9 +212,39 @@ a {{ color:inherit; }}
 .cover .book {{ display:block; height:auto; border-radius:4px; box-shadow:0 10px 30px rgba(0,0,0,.25); margin:0 auto 6px;
   width:min(100%, calc((100vh - 170px) * {BOOK_RATIO})); width:min(100%, calc((100svh - 170px) * {BOOK_RATIO})); }}
 .sr {{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }}
-.maps {{ padding:88px 0 6em; border-top:1px solid var(--rule); }}
-.maps header {{ margin-bottom:1.6em; }}
-.maps h2 {{ font-family:var(--display); font-weight:800; font-size:calc(var(--fs) * 1.7); margin:0; }}
+.appx {{ padding:88px 0 3em; border-top:1px solid var(--rule); }}
+.appx > header {{ margin-bottom:1.4em; }}
+.appx h2 {{ font-family:var(--display); font-weight:800; font-size:calc(var(--fs) * 1.7); margin:0; }}
+.appx .lead {{ margin:0 0 1em; }}
+.appx .sublead, .appx .cnote {{ font:14px/1.7 var(--ui); color:var(--soft); margin:0 0 1.6em; }}
+.pidx {{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 1em; }}
+.pidx a {{ font:600 14px var(--ui); text-decoration:none; padding:7px 12px; border:1px solid var(--rule); border-radius:999px; background:var(--sheet); }}
+.pc {{ padding:2.6em 0 1.2em; border-top:1px solid var(--rule); margin-top:1.8em; }}
+.pc h3 {{ font-family:var(--display); font-weight:800; font-size:calc(var(--fs) * 1.5); line-height:1.2; margin:0 0 6px; }}
+.pc .rank {{ font:600 14px/1.5 var(--ui); margin:0; }}
+.pc .who {{ font:14px/1.5 var(--ui); color:var(--soft); margin:2px 0 0; }}
+.pc .pline {{ font-family:var(--display); font-weight:800; font-size:calc(var(--fs) * 1.05); line-height:1.6; margin:1em 0 1.1em; }}
+.pc figure, .crest {{ margin:0 0 1.1em; }}
+.pc img, .crest img {{ display:block; width:100%; height:auto; border-radius:6px; border:1px solid var(--rule); background:#fdeee3; }}
+.pc figcaption {{ font:13px var(--ui); color:var(--soft); margin-top:6px; text-align:center; }}
+.pc dl {{ margin:0; }}
+.pc dl div {{ padding:10px 0; border-top:1px solid var(--rule); }}
+.pc dt {{ font:600 12px var(--ui); letter-spacing:.08em; color:var(--soft); margin-bottom:2px; }}
+.pc dd {{ margin:0; font-size:calc(var(--fs) * .92); line-height:1.8; }}
+.pc dd q, .pc .pline q {{ quotes:'"' '"'; font-weight:700; }}
+.creststrip {{ display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; margin:0 0 1.2em; }}
+.creststrip figure {{ margin:0; min-width:0; text-align:center; }}
+.creststrip img {{ display:block; width:100%; height:auto; border-radius:5px; border:1px solid var(--rule); }}
+.creststrip figcaption {{ font:11px/1.4 var(--ui); color:var(--soft); margin-top:5px; }}
+.creststrip b {{ display:block; font-family:var(--display); font-weight:800; font-size:calc(var(--fs) * .95); color:var(--ink); }}
+.crestgrid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:22px 16px; margin:0 0 1.6em; }}
+.crest {{ margin:0; min-width:0; }}
+.crest figcaption {{ display:grid; gap:3px; margin-top:8px; }}
+.crest b {{ font-family:var(--display); font-weight:800; font-size:calc(var(--fs) * 1.1); }}
+.crest .crank {{ font:12px var(--ui); letter-spacing:.08em; color:var(--soft); }}
+.crest .cline {{ font-size:calc(var(--fs) * .84); line-height:1.7; }}
+.crest .cwho {{ font:13px/1.6 var(--ui); color:var(--soft); }}
+.maps {{ padding-bottom:6em; }}
 .maps figure {{ margin:0 0 2.4em; }}
 .maps img {{ display:block; width:100%; height:auto; border-radius:6px; border:1px solid var(--rule); }}
 .maps figcaption {{ font:13px var(--ui); color:var(--soft); margin-top:8px; text-align:center; }}
@@ -381,7 +443,7 @@ a {{ color:inherit; }}
         var el = els[i];
         if (el.tagName==='P' && el.id && /^c\\d+-/.test(el.id)) return el.id;
         if (el.classList && el.classList.contains('cover')) return null;
-        if (el.classList && el.classList.contains('maps')) return 'maps';
+        if (el.classList && el.classList.contains('appx')) return el.id;
       }}
     }}
     return lastSaved || null;
@@ -403,7 +465,8 @@ a {{ color:inherit; }}
     lastY = y;
     var h = document.documentElement.scrollHeight - window.innerHeight; prog.style.width = (h>0 ? (y/h*100) : 0) + '%';
     var id = currentPara(), ch = chOf(id);
-    where.textContent = id === 'maps' ? '부록 · 지도' : ch ? (ch + '장 · ' + TITLES[ch]) : '{TITLE}';
+    var APPX = {{maps:'부록 · 지도', cast:'부록 · 인물 소개', crests:'부록 · 오계 문장'}};
+    where.textContent = APPX[id] ? APPX[id] : ch ? (ch + '장 · ' + TITLES[ch]) : '{TITLE}';
     if (!restoring && ch && id !== lastSaved) {{ lastSaved = id; LS.set('hrhs-pos', id); if (ch > maxRead) {{ maxRead = ch; LS.set('hrhs-max', ch); }} paintToc(ch); }}
     ticking=false;
   }}
@@ -415,6 +478,11 @@ a {{ color:inherit; }}
     var sel = window.getSelection && window.getSelection(); if (sel && String(sel).length) return;
     bar.classList.toggle('hide');
   }});
+
+  /* links to one person inside the character notes */
+  document.addEventListener('click', function(e){{ var a=e.target.closest('a[href^="#p-"]'); if (!a) return; e.preventDefault();
+    var t=document.getElementById(a.getAttribute('href').slice(1)); if (!t) return;
+    window.scrollTo({{top: t.getBoundingClientRect().top + window.scrollY - barH() - 8}}); lastY = window.scrollY; }});
 
   /* in-page links (다음 장, 처음부터) */
   document.addEventListener('click', function(e){{ var a=e.target.closest('a[href^="#ch"]'); if (!a || a.closest('.toc')) return; e.preventDefault(); goChapter(+a.getAttribute('href').slice(3)); }});

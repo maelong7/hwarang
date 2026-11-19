@@ -11,3 +11,4 @@
    `python3 tools/build.py /tmp/chapters.json . https://maelong7.github.io/hwarang/ 202611192330`
 3. 표지와 지도는 `img/cover.jpg`, `img/map-route.jpg`, `img/map-city.jpg`가 있으면 들어간다. 그림을 넣거나 바꾼 뒤에는 2번을 다시 한다.
 4. 아이콘은 `python3 tools/render_art.py .`, 표지로 만든 링크 미리보기 그림(og.jpg)은 `python3 tools/render_og.py .`
+5. 1부 끝 뒤의 부록(인물 소개, 오계 문장)은 `tools/cast.json`과 `img/cast/*.jpg`가 있으면 들어간다. 순서는 인물 소개, 오계 문장, 지도다. 글을 고치려면 `tools/cast.json`을 고치고 2번을 다시 한다. 인물 소개에는 1부 본문에 나온 것만 적는다.
